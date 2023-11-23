@@ -1,0 +1,14 @@
+.home {
+	padding: 10px;
+}
+
+.headerTitle {
+	color: #000000;
+	font-style: normal;
+	font-size: 40px !important;
+}
+.bodyText {
+	color: #000000;
+	font-style: normal;
+	font-size: 20px;
+}

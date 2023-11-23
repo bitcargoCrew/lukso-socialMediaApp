@@ -1,0 +1,44 @@
+.home {
+  padding: 10px;
+}
+
+.headerTitle {
+  color: #000000;
+  font-style: normal;
+  font-size: 40px !important;
+}
+
+.bodyText {
+  color: #000000;
+  font-style: normal;
+  font-size: 20px;
+}
+
+.DetailGroupTab > .menu > .item {
+  width: 33%;
+}
+
+.homeGroupTab > .ui.grid > [class*="four wide"].column {
+  width: 15% !important;
+  margin-left: 5px;
+}
+
+.homeGroupTab > .ui.grid > [class*="twelve wide"].column {
+  width: calc(85% - 10px) !important;
+}
+
+.ui.grid > .column:not(.row) {
+  padding-left: 2rem;
+}
+
+.groupItem {
+  margin: 2px;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 5px;
+}
+
+.img {
+  width: 500px;
+  height: 600px;
+}
