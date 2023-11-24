@@ -112,7 +112,7 @@ export default class MyHeader extends Component {
   render() {
     return (
       <Menu fixed="top" style={{ backgroundColor: "#001856" }}>
-        <Container>
+        <Container style={{ fontSize: "1rem"}}>
           <Link to="/">
             <Image src="/bitvia.png" width={144} height={40} alt="Bitvia" />
           </Link>
