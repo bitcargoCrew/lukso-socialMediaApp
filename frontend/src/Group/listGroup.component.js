@@ -7,17 +7,17 @@ import {
 
 import "./group.css";
 
-import axios from "axios";
 
 import GroupDetail from "./detailGroup.component";
 
 import ShowModal from "./showModal";
 
-import {config} from "../Common/config"
-
 import {checkBalance, trimContent} from "../Common/readProfileFn.js";
 import { getNameAndAvatar } from "../Common/readProfileFn.js";
 
+import {fundraisingDb} from '../Database/fundraising.db';
+
+import Loading from "../Home/loading.component.js";
 
 export default class GroupList extends Component {
 	
@@ -39,23 +39,19 @@ export default class GroupList extends Component {
 			},
 			modal : {
 				show: false
-			}
+			},
+			loadingActive : false
 		}
 	}
 
 	async componentDidMount() {
 		var self = this;
 
-		var response  = {data : []}
-    
-		try {
-			response =  await axios.post(config.DATABASE+'/mygroups', {
-				userAddress: this.state.userAddress
-			})
-		}catch(e) {
-		}
+		this.setState({
+			loadingActive : true
+		})
 
-		var groups = response.data;
+		var groups = await fundraisingDb.myGroup(this.state.userAddress)
 
 		for (var e in groups) {
 			groups[e].ownerprofile = await getNameAndAvatar(groups[e].owner);
@@ -67,14 +63,25 @@ export default class GroupList extends Component {
 					self.setState({
 						type : 1,
 						groups : groups,
-						selectedGroup : groups[e]
+						selectedGroup : groups[e],
+						loadingActive : false
 					});
 					return;
 				}
 			}
+
+			self.setState({
+				type : 0,
+				groups : [],
+				selectedGroup : {},
+				loadingActive : false
+			});
+			return;
+
 		} else {
 			self.setState({
-				groups : groups
+				groups : groups,
+				loadingActive : false
 			})
 		}
 
@@ -140,6 +147,7 @@ export default class GroupList extends Component {
 	render() {
 	     return (<>
 		 	<ShowModal show={this.state.modal.show} title={this.state.modal.title} description={this.state.modal.description} handleClose={(e)=> {this.setState({modal: {show: false}})}}/>
+			<Loading active={this.state.loadingActive}></Loading>
 
 			{this.state.type == 0 
 				? (<>
@@ -152,7 +160,9 @@ export default class GroupList extends Component {
 							{this.getGroupList()}
 						</Grid>
 						</>)
-					: (<><h2>No groups available, you can explore the groups <a href="/group?groupType=2">here</a></h2></>)
+					: this.state.loadingActive
+						? (<></>)
+						: (<><h2>No groups available, you can explore the groups <a href="/group?groupType=2">here</a></h2></>)
 					}
 					</>
 				)

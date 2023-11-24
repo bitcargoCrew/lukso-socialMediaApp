@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 
-import { Redirect, Link, Breadcrumb } from "react-router-dom";
+// import { Redirect, Link, Breadcrumb } from "react-router-dom";
 import {
   Grid,
   Image,
@@ -12,8 +12,6 @@ import { Button } from "react-bootstrap";
 
 import "./group.css";
 
-import axios from "axios";
-
 import ShowModal from "./showModal";
 
 import { config } from "../Common/config";
@@ -21,6 +19,9 @@ import { config } from "../Common/config";
 import { checkBalance, trimContent } from "../Common/readProfileFn.js";
 
 import { getNameAndAvatar } from "../Common/readProfileFn.js";
+
+import {fundraisingDb} from '../Database/fundraising.db';
+import Loading from "../Home/loading.component.js";
 
 export default class ExploreGroup extends Component {
   constructor(props) {
@@ -38,23 +39,16 @@ export default class ExploreGroup extends Component {
 
   async componentDidMount() {
     var self = this;
-
-    var response  = {data : []}
-    
-    try {
-      response =  await axios.post(config.DATABASE + "/filtergroups", {
-          userAddress: this.state.userAddress,
-          search: "",
-      })
-    }catch(e) {
-    }
-
-    var groups = response.data;
+    self.setState({
+      loadingActive : true
+    })
+    var groups = await fundraisingDb.filterGroup(this.state.userAddress, "")
     for (var e in groups) {
       groups[e].ownerprofile = await getNameAndAvatar(groups[e].owner);
     }
     self.setState({
       groups,
+      loadingActive : false
     });
   }
 
@@ -100,9 +94,8 @@ export default class ExploreGroup extends Component {
   async checkJoinedGroup(selectedGroup, userAddress) {
     if (!selectedGroup.user) {
       try {
-        var response = await axios.post(config.DATABASE + "/newjoingroup", {
-          joingroup: [selectedGroup.groupId, userAddress],
-        });
+
+        await fundraisingDb.joinGroup(selectedGroup.groupId, userAddress);
       } catch (e) {
         console.log(e);
       }
@@ -152,20 +145,22 @@ export default class ExploreGroup extends Component {
     const target = event.target;
     const value = target.value;
 
-    var rs = await axios.post(config.DATABASE + "/filtergroups", {
-      userAddress: this.state.userAddress,
-      search: value,
-    });
+    var groups = await fundraisingDb.filterGroup(this.state.userAddress, value)
+
+    for (var e in groups) {
+      groups[e].ownerprofile = await getNameAndAvatar(groups[e].owner);
+    }
 
     this.setState({
       search: value,
-      groups: rs.data,
+      groups,
     });
   }
 
   render() {
     return (
       <>
+        <Loading active={this.state.loadingActive}></Loading>
         <ShowModal
           show={this.state.modal.show}
           title={this.state.modal.title}

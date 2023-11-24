@@ -16,10 +16,8 @@ import InputEmoji from 'react-input-emoji'
 	import Loading from "../Home/loading.component.js";
 
 import "./group.css";
-import {config} from "../Common/config";
 
-
-import axios from "axios";
+import { fundraisingDb } from "../Database/fundraising.db.js";
 
 
 export default class Post extends Component {
@@ -44,18 +42,7 @@ export default class Post extends Component {
 		var selectedPost = self.props.selectedPost;
 		selectedPost.ownerprofile =  await getNameAndAvatar(selectedPost.owner);
 
-		var comments = [];
-
-		try {
-			var response = await axios.post(config.DATABASE+'/comments', {
-				userAddress: this.state.userAddress,
-				postId : self.props.selectedPost.postId
-			});
-
-			comments = response.data;
-		}catch(err) {
-			console.log(err);
-		}
+		var comments = await fundraisingDb.getComments(self.props.selectedPost.postId);
 
 		for (var e in comments) {
 			comments[e].ownerprofile = await getNameAndAvatar(comments[e].owner);
@@ -108,12 +95,7 @@ export default class Post extends Component {
 			createdTime: new Date().getTime()       
 		}
 
-		//send to db
-		var cmtToDb = Object.values(newComment);
-
-		var response = await axios.post(config.DATABASE+'/newcomment', {
-			comment : cmtToDb
-		  });
+		await fundraisingDb.newComment(newComment);
 
 		newComment.ownerprofile = this.state.myProfile;
 

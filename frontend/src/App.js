@@ -21,9 +21,6 @@ function App() {
             <Route exact path='/master' component={Home} />
             <Route exact path='/chat' component={Chat} />
             <Route exact path='/group' component={HomeGroup} />
-
-            {/* <Route exact path='/group/:explore' component={GroupExplore} /> */}
-
           </Switch>
       </div>
     </div></Router>

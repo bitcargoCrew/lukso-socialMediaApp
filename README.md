@@ -5,7 +5,7 @@
 
 On Bitvia you will find everything you need to connect to your fans, interact with them and let them support you. Powered by the possibilites of Web3, you have all the tools at your disposal to expand your fan base and distribute your ideas. No matter where you are on your creative journey, there should be no boundaries. Enjoy complete creative control.
 
-Check it out: Youtube link here
+Check it out: Youtube link here!
 
 # Team
 
@@ -39,6 +39,10 @@ We use the following parts of the Lukso Blockchain:
 Our smart contract is developed and tested in [here](/smartcontract)
 
 ## Frontend
+
+### Prepare .env file
+
+
 
 ### Install the dependencies and run the development server
 

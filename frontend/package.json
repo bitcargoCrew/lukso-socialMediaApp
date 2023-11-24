@@ -30,7 +30,9 @@
     "semantic-ui-react": "^2.1.2",
     "web3": "1.10.2",
     "web3-eth-contract": "1.10.2",
-    "react-quill": "^2.0.0"
+    "react-quill": "^2.0.0",
+    "firebase" : "^10.6.0",
+    "eth-crypto": "^2.6.0"
   },
   "scripts": {
     "start": "react-scripts start",

@@ -18,8 +18,7 @@ import {TagsInput} from "../Common/tagsInput";
 
 import Loading from "../Home/loading.component.js";
 
-
-// import Loading from "../Home/loading.component.js";
+import {fundraisingDb} from '../Database/fundraising.db';
 
 const defaultSuggestedTags = ["Metaverse","Web3","NFT","Painting","Music","Social Media","Arts & Entertainment"];
 
@@ -170,13 +169,8 @@ export default class CreateGroup extends Component {
 				topic: this.state.topic
 			}
 
-			var cmtToDb = Object.values(newGroup);
+			await fundraisingDb.createGroup(newGroup);
 
-			var response = await axios.post(config.DATABASE+'/newgroup', {
-				group : cmtToDb,
-				joingroup : [newGroup.groupId, newGroup.owner]
-			});
-			
 			setTimeout(() => {
 				window.location = "/group?groupType=1&groupId="+newGroup.groupId;
 			}, 3000);

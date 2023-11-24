@@ -3,6 +3,8 @@ const FormData = require('form-data')
 // const fs = require('fs')
 import {config} from "./config";
 
+const pinataJwt = process.env.REACT_APP_PINATAJWT ? process.env.REACT_APP_PINATAJWT : "www.pinatajwt.com";
+
 export async function pinFileToIPFS (file) {
     const formData = new FormData();
 
@@ -21,11 +23,7 @@ export async function pinFileToIPFS (file) {
     try{
         // get JWT
 
-        var response = await axios.post(config.DATABASE+'/pinatajwt', {
-          userAddress: "userAddress26"
-        });
-
-        var JWT = "Bearer "+response.data;
+        var JWT = "Bearer "+pinataJwt;
 
         // done JWT
 

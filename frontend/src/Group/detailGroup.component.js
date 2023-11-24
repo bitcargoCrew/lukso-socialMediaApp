@@ -1,16 +1,8 @@
 import React, { Component } from "react";
 
-import { Redirect, Link } from "react-router-dom";
 import {
-  Container,
-  Divider,
-  Dropdown,
   Grid,
-  Header,
   Image,
-  List,
-  Menu,
-  Segment,
   Card,
   Button,
   Tab,
@@ -18,8 +10,6 @@ import {
 } from "semantic-ui-react";
 
 import "./group.css";
-
-import axios from "axios";
 
 import Post from "./post.component";
 import { getNameAndAvatar } from "../Common/readProfileFn.js";
@@ -29,6 +19,7 @@ import { Donation } from "./donation";
 
 import Loading from "../Home/loading.component.js";
 import { config } from "../Common/config";
+import { fundraisingDb } from "../Database/fundraising.db";
 
 export default class GroupDetail extends Component {
   constructor(props) {
@@ -82,16 +73,7 @@ export default class GroupDetail extends Component {
       loadingActive : true
     })
 
-    var posts = [];
-    try {
-      var response = await axios.post(config.DATABASE + "/posts", {
-        userAddress: this.state.userAddress,
-        groupId: self.props.selectedGroup.groupId,
-      });
-      posts = response.data;
-    } catch (err) {
-      console.log(err);
-    }
+    var posts = await fundraisingDb.getPosts(self.props.selectedGroup.groupId);
 
     for (var e in posts) {
       posts[e].ownerprofile = await getNameAndAvatar(posts[e].owner);
@@ -117,16 +99,7 @@ export default class GroupDetail extends Component {
     //Pull campaign from blockchain
     var lsCampaigns = [];
 
-    try {
-      var response = await axios.post(config.DATABASE + "/campaigns", {
-        userAddress: this.state.userAddress,
-        groupId: self.props.selectedGroup.groupId,
-      });
-
-      lsCampaigns = response.data;
-    } catch (err) {
-      console.log(err);
-    }
+    var lsCampaigns = await fundraisingDb.getCampaigns(self.props.selectedGroup.groupId);
 
     this.setState({ 
       lsCampaigns,
@@ -210,14 +183,8 @@ export default class GroupDetail extends Component {
     newPost.owner = this.state.myProfile.myAddress;
     newPost.groupId = this.state.groupId;
 
-    var cmtToDb = Object.values(newPost);
-    try {
-      var response = await axios.post(config.DATABASE + "/newpost", {
-        post: cmtToDb,
-      });
-    } catch (err) {
-      console.log(err);
-    }
+    await fundraisingDb.newPost(newPost);
+
     newPost.ownerprofile = this.state.myProfile;
     var posts = this.state.posts;
     posts.push(newPost);
@@ -250,20 +217,7 @@ export default class GroupDetail extends Component {
         return;
       }
 
-      var cmtToDb = Object.values({
-        campaignId: newCampaign.campaignId,
-        imageLink: newCampaign.imageLink,
-        name: newCampaign.name,
-        description: newCampaign.description,
-        groupId: newCampaign.groupId,
-      });
-      try {
-        var response = await axios.post(config.DATABASE + "/newcampaign", {
-          campaign: cmtToDb,
-        });
-      } catch (err) {
-        console.log(err);
-      }
+      await fundraisingDb.newCampaign(newCampaign);
 
       var lsCampaigns = this.state.lsCampaigns;
       lsCampaigns.push(newCampaign);

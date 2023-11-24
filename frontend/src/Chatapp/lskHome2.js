@@ -10,9 +10,6 @@ import {
   Loading,
 } from "./Components.js";
 
-import Web3 from 'web3';
-import axios from "axios";
-
 import { AttachAsset } from "../Common/attachAsset.js";
 
 import {getProfileData, fetchProfile, getBackground} from "../Common/readProfileFn.js";
@@ -24,6 +21,9 @@ import InputEmoji from 'react-input-emoji'
 import MyHeader from '../Common/header.component';
 
 import {config} from "../Common/config"
+import { fundraisingDb } from "../Database/fundraising.db.js";
+
+import {encryptData, decryptData, publicKeyByPrivateKey} from "../Common/encodingData";
 
 const DEFAULT_AVATAR = "logo.svg"
 
@@ -31,7 +31,7 @@ export default function LskHome() {
   const [friends, setFriends] = useState(null);
   const [myName, setMyName] = useState(null);
   const [myAvatar, setMyAvatar] = useState("");
-  const [myPublicKey, setMyPublicKey] = useState(null);
+  const [myPublicKey, setMyPublicKey] = useState(undefined);
   const [myProfile, setMyProfile] = useState({});
   const [ msgText, setMsgText ] = useState('');
   const [ searchText, setSearchText ] = useState('');
@@ -42,6 +42,9 @@ export default function LskHome() {
   const [showAlert, setShowAlert] = useState({show : false, title: "Error", content: "Error"});
   const [ allUsers, setAllUsers ] = useState([])
   const [effectStep, setEffectStep] = useState(0);
+
+  const [chatAccount, setChatAccount] = useState({});
+
 
   const [activeChat, setActiveChat] = useState({
     friendname: null,
@@ -55,7 +58,7 @@ export default function LskHome() {
 
   async function afterStartup() {
     var address = localStorage.getItem("MyAddress");
-    if (address) {
+    if (address && !myPublicKey) {
       try {        
         let myProfile = await getProfileData(address);
     
@@ -67,19 +70,50 @@ export default function LskHome() {
         } else {
           console.log("You do not have universal profile yet, please create one");
         }
-        
+
         if (myProfile && myProfile.profileImage && myProfile.profileImage[0]) {
           setMyAvatar((myProfile.profileImage[0].url).replace("ipfs://", "https://ipfs.io/ipfs/"));
         }
         setMyName(username);
         setMyPublicKey(address);
         setShowConnectButton("none");
-        
-        loadFriends();
+
+        getChatAccount();
+
 
       } catch (err) {
         console.log(err);
       }
+    }
+    if (myPublicKey) {
+      loadFriends();
+    }
+  }
+
+  async function getChatAccount() {
+
+    var address = localStorage.getItem("MyAddress");
+    try {
+      // console.log("publicKeyChatAccount");
+      // console.log(publicKeyChatAccount);
+
+      var signature = await window.web3.eth.sign("bitvia.de",address);
+      var hash32 = await web3.utils.soliditySha3(signature);
+      var chatAccount = {
+        publicKey : await publicKeyByPrivateKey(hash32),
+        privateKey : hash32
+      }
+
+      setChatAccount(chatAccount);
+
+      var publicKeyChatAccount = await fundraisingDb.getChatAccount(address);
+
+      if (!publicKeyChatAccount) {
+        await fundraisingDb.setChatAccount(address, chatAccount.publicKey);
+      }
+    } catch(e) {
+      setShowAlert({show: true, title: "WARNING", content: "Please sign to go to the chatapp"});
+      location.reload();
     }
   }
 
@@ -99,10 +133,7 @@ export default function LskHome() {
 
         var frnd = { name: frProfile.name, publicKey: publicKey };
 
-        const response = await axios.post(config.DATABASE+'/addfriend', {
-          user1 : myPublicKey,
-          user2: publicKey
-        });
+        await fundraisingDb.setFriend(myPublicKey, publicKey);
 
         frnd.profile = frProfile;
         var frAvatar = "";
@@ -140,14 +171,22 @@ export default function LskHome() {
       setLoadingActive(true);
 
       const recieverAddress = activeChat.publicKey;
-      
-      await axios.post(config.DATABASE+'/addmessage', {
-        fromUser : myPublicKey,
-        toUser: recieverAddress,
-        message : msg
-      });
+
+      var friendChatPublicKey = await fundraisingDb.getChatAccount(recieverAddress);
+
+      if (!friendChatPublicKey) {
+        setLoadingActive(false);
+        setShowAlert({show: true, title: "WARNING", content: "Your friend has not joined the chat application yet, please ask him to join the Bitvia chat app"});
+        return;
+      }
+
+      var data = {}
+      data[myPublicKey] = await encryptData(chatAccount.publicKey, msg);
+      data[recieverAddress] = await encryptData(friendChatPublicKey, msg);
+      await fundraisingDb.setMessage(myPublicKey, recieverAddress, data);
     
       await getMessage(activeChat.publicKey);
+
       setLoadingActive(false);
       scrollToBottom();
 
@@ -184,22 +223,20 @@ export default function LskHome() {
       }
     });
 
-    const response = await axios.post(config.DATABASE+'/getallmessages', {
-      fromUser : myPublicKey,
-      toUser: friendsPublicKey
-    });
+    var data = await fundraisingDb.getMessages(myPublicKey, friendsPublicKey);
 
-    var data = response.data;
+    for (var e in data) {
+      var item  = data[e];
+      const timeStamp = new Date(parseInt(item.timestamp)).toLocaleString();
 
-    data.forEach((item) => {
-      const timeStamp = new Date(1000 * parseInt(item.timestamp)).toLocaleString();
+      var msg = await decryptData(chatAccount.privateKey, item.message[myPublicKey]);
 
       messages.push({
         publicKey: item.fromUser,
         timeStamp,
-        data: item.message
+        data: msg
       });
-    });
+    };
 
     setActiveChat({ friendname: nickname, publicKey: friendsPublicKey, avatar });
     setActiveChatMessages(messages);
@@ -218,13 +255,10 @@ export default function LskHome() {
       
       setLoadingActive(true);
 
-      const response = await axios.post(config.DATABASE+'/getallfriends', {
-				userAddress : myPublicKey
-			});
-      var data = response.data;
+      var data = await fundraisingDb.getFriends(myPublicKey);
 
       data.forEach((item) => {
-        friendList.push({ publicKey: item.fr });
+        friendList.push({ publicKey: item });
       });
 
       for (var f in friendList) {
@@ -257,7 +291,7 @@ export default function LskHome() {
 
   useEffect(() => {
     if (localStorage.getItem("MyAddress")) {
-      afterStartup();
+        afterStartup();
     } else {
       setMyName(undefined);
       setMyPublicKey(undefined);
