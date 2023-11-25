@@ -107,13 +107,13 @@ Messages should be encrypted and only the recipient should be able to decrypt th
 3. We have generated a public key from the private key, which we will use as the user's public key in our chat app.
 4. Finally, we stored the public key that is linked to the user Lukso's address in Firebase.
 
-![Signature To Account](./documentation/SignatureToAccount.drawio.png "Signature To Account")
+![image](https://github.com/bitcargoCrew/lukso-socialMediaApp/assets/109482868/1865f391-33c4-4504-b167-e02b42766a38)
 
 Before a user can chat, the person must sign the message so that a public and a private key for the chat app is created. The private key is used for the decryption and and public key is used for the encryption of the message. In the database, only the public key is stored, and the encrypted content. To chat with a friend, both users must join the chat app so that our database can match the public keys and only these two people can decrypt the message.
 
 This is an example of what we store inside Firebase:
 
-![Message sample](./documentation/message-picture.png "Message sample")
+![image](https://github.com/bitcargoCrew/lukso-socialMediaApp/assets/109482868/851b3790-fa27-4021-9a3b-c803f3784326)
 
 In our chat app, each message will be encrypted for both sender and receiver, so both users can read it.
 
