@@ -137,7 +137,7 @@ export default class MainTab extends Component {
                 <Grid centered marginTop ="50px">
                   <YouTube 
                    align-items="center"
-                    videoId="Oflbho9ZG2U"
+                    videoId="4XCNwCOz8mU"
                     options={options}
                     onReady={this._onReady}
                     id="video"
